@@ -1,0 +1,6 @@
+* Malfease
+** Parser
+*** TODO KW parsing
+*** TODO proper reader macro printing
+*** TODO hashmap parsing and printing
+*** TODO postreader transform (reader macros -> (sym ) forms)

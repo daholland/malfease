@@ -1,0 +1,3 @@
+* Malfease
+** Mal implementation, ./tests/ and ./runtest.py from kanaka/mal repo. modified to not need the makefiles, and also to pretty output the test results.
+** See MalFsharp

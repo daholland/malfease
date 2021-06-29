@@ -1,0 +1,2 @@
+#!/bin/bash
+exec $(dirname $0)/MalFsharp/src/malfcli/bin/Debug/net5.0/malfcli.${STEP:-stepA_mal} ${RAW:+--raw} "${@}"

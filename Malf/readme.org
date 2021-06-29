@@ -1,0 +1,19 @@
+* Malf! Malfease? Def. not Malf Fury Ion....
+
+** A lisp for dotnet
+This will eventually be a lisp intended for runtime scripting dotnet applications, and especially Monogame things.
+
+** Why Malf?
+This was started as an implementation for kanaka/mal in fsharp, and I plan to continue its development further than mals target, especially re: dotnet interop
+It's short for Mal Fsharp, or Malfease. 
+*Malf(ease) is short for Mal Fsharp Embedded Awful Script Engine*
+** What can't it do?
+boogaloo
+
+** Licenses!
+*** Malf(ease)
+**** idk MIT im thinking
+*** Libraries
+**** dotnet core 5 - mit
+**** FPParsec http://www.quanttec.com/fparsec/license.html
+**** mal github.com/kanaka/mal - slightly modified to use rich python library for color printing runtests.py results

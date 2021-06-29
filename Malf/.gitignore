@@ -1,0 +1,21 @@
+**/*.dll
+**/*.pdb
+
+!.config
+
+src/malfcli/bin
+src/malflib/bin
+
+src/malfcli/obj
+src/malflib/obj
+
+
+build
+build_debug
+
+#Paket dependency manager
+.paket/
+paket-files/
+
+.fake
+.ionide

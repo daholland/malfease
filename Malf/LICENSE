@@ -1,0 +1,11 @@
+Copyright David Holland 2021
+
+tests and inspiration sourced from mal @ github.com/kanaka/mal
+
+* library licenses:
+    * FParsec: http://www.quanttec.com/fparsec/license.html
+
+
+* !! Undecided license !! 
+
+** assume (if it works with all libraries used) this will be MIT or BSD licensed in the future.
