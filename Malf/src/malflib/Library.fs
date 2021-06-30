@@ -42,19 +42,6 @@ module Reader =
 
     let _pfloat = pfloat
 
-    let next = ()
-    let peek = ()
-
-    let read_str = ()
-
-    let tokenize = ()
-
-    let read_form = ()
-
-    let read_list = ()
-
-    let read_atom = ()
-
     let malfnil = stringReturn "nil" MalfNil
     let malftrue = stringReturn "true" (MalfBool true)
     let malffalse = stringReturn "false" (MalfBool false)
@@ -169,7 +156,7 @@ module Reader =
 
 
 
-let Read_d a = Reader.test Reader.malf a
+let Read'd a = Reader.test Reader.malf a
 let Read a = Reader.parseMalfString a
 
 let PostRead a = a //transform reader macros
@@ -177,9 +164,7 @@ let PostRead a = a //transform reader macros
 let Eval a = a
 
 module Printer =
-    let pr_str = ()
-
-    let escape_chars str =
+    let escapeChars str =
         String.collect (function
                         | '"' -> "\\\""
                         | '\\' -> "\\\\"
@@ -194,7 +179,7 @@ module Printer =
         "[" + (String.concat " " (Seq.ofArray inner)) + "]"
     and printmalftype m =
         match m with
-        | MalfString inner -> "\"" + escape_chars inner + "\""
+        | MalfString inner -> "\"" + escapeChars inner + "\""
         | MalfNumber inner -> string inner
         | MalfBool inner -> (string inner).ToLower()
         | MalfNil -> "nil"

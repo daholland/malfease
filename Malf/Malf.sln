@@ -9,8 +9,6 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "malflib", "src\malflib\malf
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "malfcli", "src\malfcli\malfcli.fsproj", "{0CEFD997-F918-4F6D-9707-7A5A4E5A5908}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "malfcli.step1_read_print", "src\malfcli\malfcli.step1_read_print.fsproj", "{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,22 +46,9 @@ Global
 		{0CEFD997-F918-4F6D-9707-7A5A4E5A5908}.Release|x64.Build.0 = Release|Any CPU
 		{0CEFD997-F918-4F6D-9707-7A5A4E5A5908}.Release|x86.ActiveCfg = Release|Any CPU
 		{0CEFD997-F918-4F6D-9707-7A5A4E5A5908}.Release|x86.Build.0 = Release|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Debug|x64.Build.0 = Debug|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Debug|x86.Build.0 = Debug|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Release|x64.ActiveCfg = Release|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Release|x64.Build.0 = Release|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Release|x86.ActiveCfg = Release|Any CPU
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{02B25AC5-F0A1-4CC3-B9A6-2651C04473FD} = {888FA27D-B86D-48C5-AC5B-B6B65479C555}
 		{0CEFD997-F918-4F6D-9707-7A5A4E5A5908} = {888FA27D-B86D-48C5-AC5B-B6B65479C555}
-		{CEE848FD-AD3C-4FBA-BE6A-79DB22ED1779} = {888FA27D-B86D-48C5-AC5B-B6B65479C555}
 	EndGlobalSection
 EndGlobal

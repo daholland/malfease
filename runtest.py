@@ -252,7 +252,7 @@ def assert_prompt(runner, prompts, timeout):
 
 # Wait for the initial prompt
 try:
-    assert_prompt(r, ['[^\s()<>]+> '], args.start_timeout)
+    assert_prompt(r, [r'[^\s()<>]+> '], args.start_timeout)
 except:
     _, exc, _ = sys.exc_info()
     log("\nException: %s" % repr(exc))
@@ -263,7 +263,7 @@ except:
 if args.pre_eval:
     sys.stdout.write("RUNNING pre-eval: %s" % args.pre_eval)
     r.writeline(args.pre_eval)
-    assert_prompt(r, ['[^\s()<>]+> '], args.test_timeout)
+    assert_prompt(r, [r'[^\s()<>]+> '], args.test_timeout)
 
 test_cnt = 0
 pass_cnt = 0
@@ -300,7 +300,7 @@ while t.next():
     r.writeline(t.form)
     try:
         test_cnt += 1
-        res = r.read_to_prompt(['\r\n[^\s()<>]+> ', '\n[^\s()<>]+> '],
+        res = r.read_to_prompt([r'\r\n[^\s()<>]+> ', r'\n[^\s()<>]+> '],
                                 timeout=args.test_timeout)
         #print "%s,%s,%s" % (idx, repr(p.before), repr(p.after))
         if (res == None):
@@ -344,7 +344,7 @@ if len(failures) > 0:
         log(f)
 
 results = """
-TEST RESULTS (for %s):
+TEST RESULTS (for [bold green]%s[/bold green]):
   [bright_magenta]%3d[/bright_magenta]: soft failing tests
   [red]%3d[/red]: failing tests
   [green]%3d[/green]: passing tests
@@ -352,6 +352,11 @@ TEST RESULTS (for %s):
 """ % (args.test_file, soft_fail_cnt, fail_cnt,
         pass_cnt, test_cnt)
 log(results)
+
+console.print("======= combined test rests =======")
+console.stderr = True
+console.print(results)
+console.stderr = False
 
 debug("\n") # add some separate to debug log
 

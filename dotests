@@ -1,1 +1,0 @@
-STEP=step1_read_print python ./runtest.py tests/step1_read_print.mal ./run
