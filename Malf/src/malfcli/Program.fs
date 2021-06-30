@@ -27,6 +27,7 @@ let main argv =
                 let input = Console.ReadLine()
                 match input with
                  | null -> continueRead <- false
+                 | "q;;" -> continueRead <- false
                  | inputString -> Malf.REP inputString
                                     |> printfn "%s"
     0 // return an integer exit code
