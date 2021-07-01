@@ -14,6 +14,7 @@ type MalfReaderMacro = MalfReaderQuote
                      | MalfReaderUnquote
                      | MalfReaderSpliceUnquote
                      | MalfReaderDeref
+                     | MalfReaderMeta
 
 type MalfType = MalfString of string
               | MalfNumber of float
@@ -25,6 +26,8 @@ type MalfType = MalfString of string
               | MalfVector of MalfType array
               | MalfHashMap of Map<string,MalfType>
               | MalfReaderMacro of macroType: MalfReaderMacro * macroInner: MalfType
+               
+type MalfComment = MalfComment of string //maybe? if i want doctests or something later? 
 
 
 
@@ -83,15 +86,17 @@ module Reader =
     let ws = opt (many (pchar ',')) >>. spaces
 
     let malfsym =
-        let isSymbolFirstCharacter c = isLetter c || c = '_' || c = '+'
-        let isSymbolChar c = isLetter c || c = '-' || c = '!' || c = '?' || c = '*' || c = '_'
+        //todo: reorganize this valid symbol list sometime
+        let isSymbolFirstCharacter c = isLetter c || c = '_' || c = '+' || c = '*' || c = '-' || c = '>'
+        let isSymbolChar c = isLetter c || isDigit c || c = '-' || c = '!' || c = '?' || c = '*' || c = '_' || c = '>'
 
         many1Satisfy2L isSymbolFirstCharacter isSymbolChar "symbol" |>> MalfSymbol
 
     let malfcall = malfsym .>>. (ws >>. malfval)
-    let validKeywordChars = isLetter
+    let validKeywordChars = fun c -> isLetter c || isDigit c
     
-    let malfkw = (pchar ':') >>. (manySatisfy (isLetter)) |>> MalfKeyword
+    let keywordParser = pipe2 (pchar ':') (manySatisfy (validKeywordChars)) (fun s1 s2 -> string s1 + s2)
+    let malfkw = keywordParser |>> MalfKeyword
     //TODO: This needs some work still
     
     let testasdf = MalfList [MalfSymbol "asdf"; MalfNumber 1.0; MalfList [MalfNil]]
@@ -104,7 +109,10 @@ module Reader =
         between (ws >>. str sOpen) (ws >>. str sClose)
                 (ws >>. (sepEndBy (pElement) (ws)) .>> ws |>> f)
 
-    let keyValue = (stringLiteral <|> str ":") >>. stringLiteral .>>. (ws >>. malfval)
+    //((str ":" .>>. stringLiteral |>> fun (c,s) -> String.concat "" [c;s]))
+
+    let keyValue = (stringLiteral <|> keywordParser)
+                        .>>. (ws >>. malfval)
 
 
     let malflist = (listBetweenStrings "(" ")" malfval MalfList) //.>> ws
@@ -117,17 +125,22 @@ module Reader =
         | "`" ->   pchar (char readerSym) >>. malfval |>> (fun x -> MalfReaderMacro(MalfReaderQuasiquote, x))
         | "~" -> pchar (char readerSym) >>. malfval |>> (fun x -> MalfReaderMacro(MalfReaderUnquote, x))
         | "@" -> pchar (char readerSym) >>. malfval |>> (fun x -> MalfReaderMacro(MalfReaderDeref, x))
+        | "^" -> pchar (char readerSym) >>. malfmap .>>. (ws >>. malfval) 
+                    |>> (fun (m,v) -> MalfReaderMacro(MalfReaderMeta, MalfList([v; m])))
         | "~@" -> pstring readerSym >>. malfval |>> (fun x -> MalfReaderMacro(MalfReaderSpliceUnquote, x))
         | _ -> fail "invalid reader macro created"
 
 
-    let malfquote = pchar '\'' >>. malfval |>> (fun x -> MalfReaderMacro(MalfReaderQuote, x))
+    //let malfquote = pchar '\'' >>. malfval |>> (fun x -> MalfReaderMacro(MalfReaderQuote, x))
+    
+    let malfcomment = pchar ';' >>. restOfLine true |>> ignore //MalfComment 
 
     let malfreader = choice [buildReader "~@"
                              buildReader "'"
                              buildReader "`"
                              buildReader "~"
                              buildReader "@"
+                             buildReader "^"
                              ]
 
     do malfvalref := choice [malfreader
@@ -143,7 +156,7 @@ module Reader =
                              malfmap
                              ]
 
-    let malf = ws >>. malfval .>> ws .>> eof
+    let malf = ws >>. malfval .>> ws .>> opt malfcomment .>> ws .>> eof
 
     let parseMalfParseFailureEOFMessage (str: string) =
         if str.Contains("end of the input stream")
@@ -159,16 +172,46 @@ module Reader =
 let Read'd a = Reader.test Reader.malf a
 let Read a = Reader.parseMalfString a
 
-let PostRead a = a //transform reader macros
+let rec readerMacroTransform a = 
+    match a with
+    | MalfReaderMacro(mType, mVal) -> 
+        match mType with
+        | MalfReaderQuote -> MalfList([MalfSymbol("quote"); readerMacroTransform mVal])
+        | MalfReaderQuasiquote -> MalfList([MalfSymbol("quasiquote"); readerMacroTransform mVal])
+        | MalfReaderUnquote -> MalfList([MalfSymbol("unquote"); readerMacroTransform mVal])
+        | MalfReaderSpliceUnquote -> MalfList([MalfSymbol("splice-unquote"); readerMacroTransform mVal])
+        | MalfReaderDeref -> MalfList([MalfSymbol("deref"); readerMacroTransform mVal])    
+        | MalfReaderMeta -> 
+            let (v,m) = match mVal with 
+                        | MalfList l -> (l.[0], l.[1])
+                        | _ -> failwith "MalfReaderMeta not created with a MalfList inner value"
+
+            MalfList([MalfSymbol("with-meta"); v; m])
+    | MalfList l -> List.map (readerMacroTransform) l |> MalfList
+    | MalfVector v -> Array.map (readerMacroTransform) v |> MalfVector
+    | MalfHashMap kv  -> a
+    | _ -> a
+
+
+
+let PostReadTransform a = readerMacroTransform a //transform reader macros
 
 let Eval a = a
 
 module Printer =
     let escapeChars str =
         String.collect (function
+                        | '\n' -> "\\\\n"
                         | '"' -> "\\\""
                         | '\\' -> "\\\\"
                         | c -> string c) str
+    
+    let kwOrStr key =
+        let colonp = (string key).IndexOf ":"
+        match colonp with
+        | 0 -> MalfKeyword key
+        | _ -> MalfString key
+
 
     let rec printlist l =
         let inner = List.map printmalftype l
@@ -177,6 +220,9 @@ module Printer =
     and printvector v =
         let inner = Array.map printmalftype v
         "[" + (String.concat " " (Seq.ofArray inner)) + "]"
+    and printmap m =
+        let inner = (Map.toSeq m) |> Seq.map (fun (k, v) -> printmalftype (kwOrStr k) + " " + printmalftype v)
+        "{" + (String.concat " " inner) + "}"
     and printmalftype m =
         match m with
         | MalfString inner -> "\"" + escapeChars inner + "\""
@@ -184,11 +230,11 @@ module Printer =
         | MalfBool inner -> (string inner).ToLower()
         | MalfNil -> "nil"
         | MalfSymbol inner -> inner
-        | MalfKeyword inner -> ":" + inner
+        | MalfKeyword inner -> inner
         | MalfList inner -> printlist inner
         | MalfVector inner -> printvector inner
-        | MalfHashMap inner -> string inner
-        | MalfReaderMacro (macrotype, inner) -> string (macrotype, inner)
+        | MalfHashMap inner -> printmap inner
+        | MalfReaderMacro (macrotype, inner) -> string (macrotype, inner) //should already be transformed at this point!!(?)
 
 let Print a = Printer.printmalftype a //printmaltype instead??
 
@@ -196,4 +242,4 @@ let Test a =
     // printfn "tet!"
     a
 
-let REP a = a |> Read |> PostRead |> Eval |> Test |> Print
+let REP a = a |> Read |> PostReadTransform |> Eval |> Test |> Print
