@@ -1,4 +1,4 @@
-#r "nuget:
+#r "paket:
 nuget Fake.Core.Target
 nuget Fake.DotNet.Cli //"
 #load "./.fake/build.fsx/intellisense.fsx"
@@ -8,9 +8,15 @@ open Fake.Core
 open Fake.IO
 open Fake.DotNet
 
+let libdir = "src/malflib"
+let clidir = "src/malfcli"
+
 // *** Define Targets ***
 Target.create "Clean" (fun _ ->
   Trace.log " --- Cleaning stuff --- "
+  DotNet.exec id "clean" "" |> ignore
+  Shell.cleanDirs [libdir + "/obj"; libdir + "/bin";
+                       clidir + "/obj"; clidir + "/bin"]
 )
 
 Target.create "Build" (fun _ ->
@@ -24,8 +30,9 @@ Target.create "Deploy" (fun _ ->
   Trace.log " --- Deploying app --- "
 )
 
-Target.create "test" (fun _ ->
+Target.create "Test" (fun _ ->
     //Shell.Exec("bash", "dotests.sh", "..")
+    //todo: just call tests from here instead of the shell script ?
     Shell.chdir ".."
     CreateProcess.fromRawCommand "bash" ["dotests.sh"]
     |> Proc.run
@@ -40,8 +47,8 @@ open Fake.Core.TargetOperators
   ==> "Build"
   ==> "Deploy"
 
-"Clean"
-  ==> "test"
+"Build"
+  ==> "Test"
 
 // *** Start Build **
-Target.runOrDefault "test"
+Target.runOrDefault "Build"
