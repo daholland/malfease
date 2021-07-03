@@ -3,9 +3,9 @@
 #./runtest.py tests/step0_repl.mal ./run 2> ./testerror0
 
 #step 1
-./runtest.py tests/step1_read_print.mal ./run 2> ./testerror1
+#./runtest.py tests/step1_read_print.mal ./run 2> ./testerror1
 
-# ./runtest.py tests/step2_eval.mal ./run 2> ./testerror2
+./runtest.py tests/step2_eval.mal ./run 2> ./testerror2
 
 # ./runtest.py tests/step3_env.mal ./run 2> ./testerror3
 

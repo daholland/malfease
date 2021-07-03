@@ -315,11 +315,11 @@ while t.next():
             pass_cnt += 1
         else:
             if t.soft and not args.hard:
-                log(" -> SOFT FAIL (line %d):" % t.line_num)
+                log(" -> [misty_rose3]SOFT FAIL[/misty_rose3] (line %d):" % t.line_num)
                 soft_fail_cnt += 1
                 fail_type = "[misty_rose3]SOFT[/misty_rose3] "
             else:
-                log(" -> FAIL (line %d):" % t.line_num)
+                log(" -> [bold red]FAIL[/bold red] (line %d):" % t.line_num)
                 fail_cnt += 1
                 fail_type = ""
             log("    Expected : %s" % repr(expects[0]))

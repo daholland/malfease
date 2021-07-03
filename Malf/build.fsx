@@ -43,9 +43,9 @@ Target.create "Test" (fun _ ->
 open Fake.Core.TargetOperators
 
 // *** Define Dependencies ***
-"Clean"
-  ==> "Build"
-  ==> "Deploy"
+// "Clean"
+//   ==> "Build"
+//   ==> "Deploy"
 
 "Build"
   ==> "Test"
