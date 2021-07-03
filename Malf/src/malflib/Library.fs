@@ -19,16 +19,38 @@ type MalfReaderMacro = MalfReaderQuote
 type MalfType = MalfString of string
               | MalfNumber of float
               | MalfBool of bool
-              | MalfNil
+              | MalfNil of unit
               | MalfSymbol of string
               | MalfKeyword of string
               | MalfList of MalfType list
               | MalfVector of MalfType array
               | MalfHashMap of Map<string,MalfType>
               | MalfReaderMacro of macroType: MalfReaderMacro * macroInner: MalfType
+              | MalfCall of string//(MalfType -> MalfType)
+              with
+              static member (+) (m0, m1) = 
+                  match m0,m1 with
+                  | MalfNumber x, MalfNumber y -> MalfNumber (x+y)
+                  | _ -> failwith "oops all out of +s"
+              static member (-) (m0, m1) = 
+                  match m0,m1 with
+                  | MalfNumber x, MalfNumber y -> MalfNumber (x-y)
+                  | _ -> failwith "oops all out of +s"
+              static member (*) (m0, m1) = 
+                  match m0,m1 with
+                  | MalfNumber x, MalfNumber y -> MalfNumber (x*y)
+                  | _ -> failwith "oops all out of +s"
+              static member (/) (m0, m1) = 
+                  match m0,m1 with
+                  | MalfNumber x, MalfNumber y -> MalfNumber (x/y)
+                  | _ -> failwith "oops all out of +s"
                
 type MalfComment = MalfComment of string //maybe? if i want doctests or something later? 
 
+let addmt (m0:MalfType) (m1:MalfType) : MalfType option =
+    match m0,m1 with
+    | MalfNumber(x), MalfNumber(y) -> Some(MalfNumber(x+y))
+    | _ -> failwith "no inline defined"
 
 
 [<RequireQualifiedAccess>]
@@ -45,7 +67,7 @@ module Reader =
 
     let _pfloat = pfloat
 
-    let malfnil = stringReturn "nil" MalfNil
+    let malfnil = stringReturn "nil" (MalfNil ())
     let malftrue = stringReturn "true" (MalfBool true)
     let malffalse = stringReturn "false" (MalfBool false)
     
@@ -87,8 +109,8 @@ module Reader =
 
     let malfsym =
         //todo: reorganize this valid symbol list sometime
-        let isSymbolFirstCharacter c = isLetter c || c = '_' || c = '+' || c = '*' || c = '-' || c = '>'
-        let isSymbolChar c = isLetter c || isDigit c || c = '-' || c = '!' || c = '?' || c = '*' || c = '_' || c = '>'
+        let isSymbolFirstCharacter c = isLetter c || c = '_' || c = '+' || c = '*' || c = '-' || c = '>' || c = '/'
+        let isSymbolChar c = isLetter c || isDigit c || c = '-' || c = '!' || c = '?' || c = '*' || c = '_' || c = '>' || c = '/'
 
         many1Satisfy2L isSymbolFirstCharacter isSymbolChar "symbol" |>> MalfSymbol
 
@@ -99,7 +121,7 @@ module Reader =
     let malfkw = keywordParser |>> MalfKeyword
     //TODO: This needs some work still
     
-    let testasdf = MalfList [MalfSymbol "asdf"; MalfNumber 1.0; MalfList [MalfNil]]
+    let testasdf = MalfList [MalfSymbol "asdf"; MalfNumber 1.0; MalfList [MalfNil(())]]
 
 // MalfList (MalfSymbol MalfNumber MalfList(MalfSym MalfNumber MalfNumber
 
@@ -196,7 +218,60 @@ let rec readerMacroTransform a =
 
 let PostReadTransform a = readerMacroTransform a //transform reader macros
 
-let Eval a = a
+
+module Evaler =
+    let env = seq<string * (MalfType -> MalfType -> MalfType) > {
+        ("+", (+))
+        ("-", (-))
+        ("*", (*))
+        ("/", (/))
+    }
+    let environment = Map.ofSeq env
+    
+    //let foo = environment.["+"] 1 2 
+    let foo = (+) 1 2 
+    let twoquuz = MalfNumber(2.)
+    let quuz = (+) twoquuz twoquuz 
+    
+    let rec evalAST (ast) (env:Map<string, MalfType -> MalfType -> MalfType>) = 
+        printfn "evalAST ast: %A" ast
+        match ast with
+        | MalfSymbol s -> MalfCall s
+        | MalfList l -> 
+            List.map eval l |> MalfList
+        | _ -> ast
+
+    and eval a = 
+        //printfn "eval a: %A" a
+        match a with
+        | MalfList [] -> a
+        | MalfList l ->
+                let evaled = evalAST (MalfList l) environment
+                printfn "evaled: %A" evaled
+                let evalledlist = match evaled with 
+                                    | MalfList l -> l
+                                    | _ -> []
+                let callname = match evalledlist.[0] with MalfCall(s) -> s | _ -> "fail"
+                let t = evalledlist.Tail
+                
+                printf "eval list: s: %A" evaled
+                printfn " ||| t: %A" l.Tail
+
+                let callres = match environment.ContainsKey callname with
+                              | true -> environment.[callname] (t.[0]) (t.[1])
+                              | false -> MalfString "Err"
+                
+                printfn "eval a result: %A" callres
+                
+                callres
+        | _ -> evalAST a environment
+
+
+
+let evalmalf a = Evaler.eval a 
+
+//let _ = printfn "quuz: %A" Evaler.quuz
+let Eval a = evalmalf a
 
 module Printer =
     let escapeChars str =
@@ -228,14 +303,14 @@ module Printer =
         | MalfString inner -> "\"" + escapeChars inner + "\""
         | MalfNumber inner -> string inner
         | MalfBool inner -> (string inner).ToLower()
-        | MalfNil -> "nil"
+        | MalfNil () -> "nil"
         | MalfSymbol inner -> inner
         | MalfKeyword inner -> inner
         | MalfList inner -> printlist inner
         | MalfVector inner -> printvector inner
         | MalfHashMap inner -> printmap inner
         | MalfReaderMacro (macrotype, inner) -> string (macrotype, inner) //should already be transformed at this point!!(?)
-
+        | MalfCall inner -> "call"
 let Print a = Printer.printmalftype a //printmaltype instead??
 
 let Test a =
